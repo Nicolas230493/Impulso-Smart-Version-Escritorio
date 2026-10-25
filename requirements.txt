@@ -1,0 +1,27 @@
+# Impulso Smart — dependencias (Python 3.10 a 3.12)
+# Instalar: pip install -r requirements.txt
+# En Linux la app de escritorio necesita además Tk del sistema: sudo apt install python3-tk
+
+# Core & Web (Django)
+Django>=5.2,<6.0
+django-widget-tweaks>=1.5,<2.0
+python-dotenv>=1.0,<2.0
+waitress>=3.0,<4.0
+tzdata>=2024.1            # zona horaria America/Argentina/Buenos_Aires en Windows (zoneinfo)
+
+# Desktop UI (CustomTkinter)
+customtkinter>=5.2,<6.0
+packaging>=23.0           # requerido por customtkinter
+pillow>=10.0,<13.0
+
+# Database & ORM (app de escritorio sobre la misma base SQLite que Django)
+SQLAlchemy>=2.0,<3.0
+
+# Reports, Excel & PDF
+reportlab>=4.0,<5.0
+openpyxl>=3.1,<4.0
+pandas>=2.0,<3.0
+python-barcode>=0.15,<1.0
+
+# Packaging & Build
+pyinstaller>=6.0,<7.0

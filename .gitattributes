@@ -1,0 +1,10 @@
+# Finales de línea normalizados (LF en el repo, nativos al hacer checkout en Windows/Linux)
+* text=auto
+*.bat text eol=crlf
+*.iss text eol=crlf
+# Binarios
+*.ico binary
+*.png binary
+*.jpg binary
+*.sqlite3 binary
+*.exe binary

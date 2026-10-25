@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Inteligencia de Negocios{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="row g-4 mb-4">
+    <!-- Impacto de Marketing -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-warning bg-opacity-10 p-3 rounded-4 me-3">
+                        <i class="bi bi-megaphone text-warning fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0">Impacto de Marketing</h6>
+                        <small class="text-muted">Descuentos acumulados</small>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small text-muted">Por Promociones:</span>
+                    <span class="fw-bold text-danger">-${{ marketing_impact.promo_discounts|floatformat:2 }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small text-muted">Por Canje Puntos:</span>
+                    <span class="fw-bold text-danger">-${{ marketing_impact.points_discounts|floatformat:2 }}</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between">
+                    <span class="fw-bold">Inversión Total:</span>
+                    <span class="fw-bold text-primary">${{ marketing_impact.total_investment|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Otras métricas existentes (puedes añadir aquí las que faltan o reorganizar) -->
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h4 class="mb-0 fw-bold opacity-75">Análisis de Desempeño</h4>
+        <a href="{% url 'products:export_advanced_excel' %}" class="btn btn-success rounded-pill px-4 shadow-sm">
+            <i class="bi bi-file-earmark-excel me-2"></i>Exportar Reporte Mensual (Excel)
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Métricas de Rentabilidad Neta -->
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 bg-primary text-white">
+            <div class="card-body p-4 text-center">
+                <p class="small fw-bold text-uppercase mb-1 opacity-75">Ingresos Totales</p>
+                <h3 class="fw-bold mb-0">${{ net_profit_data.revenue|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4 text-center">
+                <p class="text-muted small fw-bold text-uppercase mb-1">Costo Mercadería</p>
+                <h3 class="fw-bold mb-0 text-danger">-${{ net_profit_data.cost|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4 text-center">
+                <p class="text-muted small fw-bold text-uppercase mb-1">Gastos Operativos</p>
+                <h3 class="fw-bold mb-0 text-danger">-${{ net_profit_data.expenses|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 bg-success text-white">
+            <div class="card-body p-4 text-center">
+                <p class="small fw-bold text-uppercase mb-1 opacity-75">Ganancia Neta</p>
+                <h3 class="fw-bold mb-0">${{ net_profit_data.profit|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Gráfico de Horas Pico -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-4">Ventas por Hora del Día</h5>
+                <canvas id="hoursChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico Top Productos -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-4 text-primary">Top 10 Productos más Vendidos</h5>
+                <canvas id="topProductsChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Ranking de Proveedores -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-4 text-primary">Ranking Proveedores (Inversión)</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="small opacity-75">
+                            <tr>
+                                <th>Proveedor</th>
+                                <th class="text-end">Monto Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in supplier_ranking %}
+                            <tr>
+                                <td class="fw-medium small text-truncate" style="max-width: 150px;">{{ s.product__supplier__name|default:"General" }}</td>
+                                <td class="text-end fw-bold text-success">${{ s.total_spent|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="2" class="text-center py-4 opacity-75 small">Sin datos de compras</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Productos Muertos -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold mb-0 text-danger"><i class="bi bi-ghost me-2"></i>Mercadería Inmovilizada (>60 días)</h5>
+                    <div class="text-end">
+                        <span class="badge bg-danger rounded-pill mb-1">Capital: ${{ total_dead_capital|floatformat:2 }}</span>
+                        <div class="small opacity-50 fw-bold">CAPITAL MUERTO</div>
+                    </div>
+                </div>
+                <div class="row row-cols-1 row-cols-md-2 g-2 overflow-auto" style="max-height: 300px;">
+                    {% for p in dead_products %}
+                    <div class="col">
+                        <div class="p-2 bg-body-secondary rounded-3 border d-flex justify-content-between align-items-center">
+                            <span class="small fw-bold text-truncate" style="max-width: 150px;">{{ p.name }}</span>
+                            <span class="badge bg-white text-danger border shadow-sm small">${{ p.capital|floatformat:0 }}</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center py-5">
+                        <p class="opacity-75">Sin mercadería inmovilizada.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#4318ff';
+    
+    // Config Gráfico Horas
+    const hourCtx = document.getElementById('hoursChart').getContext('2d');
+    const hourData = {{ sales_hour_data|safe }};
+    new Chart(hourCtx, {
+        type: 'bar',
+        data: {
+            labels: hourData.map(d => d.hour + ':00hs'),
+            datasets: [{
+                label: 'Ventas',
+                data: hourData.map(d => d.count),
+                backgroundColor: primaryColor + 'cc',
+                borderColor: primaryColor,
+                borderWidth: 1, borderRadius: 5
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+
+    // Config Gráfico Top Productos
+    const topCtx = document.getElementById('topProductsChart').getContext('2d');
+    const topData = {{ top_products|safe }};
+    new Chart(topCtx, {
+        type: 'doughnut',
+        data: {
+            labels: topData.map(d => d.product__name),
+            datasets: [{
+                data: topData.map(d => d.total_qty),
+                backgroundColor: [
+                    primaryColor, '#0dced1', '#ffc107', '#fd7e14', '#dc3545',
+                    '#6610f2', '#6f42c1', '#e83e8c', '#20c997', '#198754'
+                ]
+            }]
+        },
+        options: { responsive: true, cutout: '60%' }
+    });
+</script>
+{% endblock %}

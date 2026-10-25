@@ -1,0 +1,1 @@
+# Mantiene la carpeta en git: settings.STATICFILES_DIRS e ImpulsoSmart.spec la requieren aunque esté vacía.

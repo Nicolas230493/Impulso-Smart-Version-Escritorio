@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Inventario de Productos{% endblock %}
+
+{% block content %}
+<!-- BARRA DE ACCIONES Y FILTROS -->
+<div class="card p-3 mb-4 border-0 shadow-sm">
+    <div class="row g-3 align-items-center">
+        <div class="col-lg-4 col-md-12">
+            <form method="get" class="input-group">
+                <span class="input-group-text bg-body-secondary border-end-0 text-body-secondary"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" class="form-control border-start-0 ps-0" placeholder="Buscar por nombre..." value="{{ request.GET.q|default:'' }}">
+            </form>
+        </div>
+        <div class="col-lg-5 col-md-8 d-flex gap-2 flex-wrap">
+            <select name="category" class="form-select form-select-sm rounded-pill px-3 shadow-sm border-0 bg-body-secondary" style="width: auto;" onchange="this.form.submit()">
+                <option value="">Todas las Categorías</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"i" %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+            <a href="?status=danger" class="btn btn-sm btn-outline-danger rounded-pill px-3 {% if request.GET.status == 'danger' %}active{% endif %}">
+                <i class="bi bi-x-circle me-1"></i> Agotados
+            </a>
+            <a href="?status=warning" class="btn btn-sm btn-outline-warning rounded-pill px-3 {% if request.GET.status == 'warning' %}active{% endif %}">
+                <i class="bi bi-exclamation-triangle me-1"></i> Stock Bajo
+            </a>
+            <a href="?status=success" class="btn btn-sm btn-outline-success rounded-pill px-3 {% if request.GET.status == 'success' %}active{% endif %}">
+                <i class="bi bi-check-circle me-1"></i> OK
+            </a>
+            <a href="{% url 'products:product_list' %}" class="btn btn-sm btn-link text-body-secondary text-decoration-none">Limpiar</a>
+        </div>
+        <div class="col-lg-3 col-md-4 text-end">
+            <div class="btn-group shadow-sm me-2">
+                <a href="{% url 'products:export_inventory_excel' %}" class="btn btn-sm btn-success rounded-start-pill px-3">
+                    <i class="bi bi-file-earmark-excel me-1"></i> Excel
+                </a>
+                <button type="button" class="btn btn-sm btn-success rounded-end-pill" data-bs-toggle="modal" data-bs-target="#importModal">
+                    <i class="bi bi-file-earmark-arrow-up"></i>
+                </button>
+            </div>
+            <a href="{% url 'products:product_create' %}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                <i class="bi bi-plus-lg me-2"></i>Nuevo Producto
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Importar -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="post" action="{% url 'products:import_inventory_excel' %}" enctype="multipart/form-data" class="modal-content">
+            {% csrf_token %}
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Carga Masiva de Productos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-body-secondary small">Selecciona un archivo Excel (.xlsx) para importar o actualizar productos.</p>
+                <input type="file" name="excel_file" class="form-control" accept=".xlsx, .xls" required>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-success px-4 rounded-pill">Iniciar Importación</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- TABLA DE PRODUCTOS -->
+<form action="{% url 'products:export_labels' %}" method="get" id="labels-form">
+<div class="table-container shadow-sm overflow-hidden rounded-4">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="bg-body-tertiary">
+            <tr>
+                <th class="ps-4" width="40"><input type="checkbox" id="select-all"></th>
+                <th>Producto / Código</th>
+                <th>Categoría</th>
+                <th width="220">Estado de Stock</th>
+                <th>Precio</th>
+                <th>Vencimiento</th>
+                <th class="text-end pe-4">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td class="ps-4">
+                    <input type="checkbox" name="products" value="{{ product.id }}" class="product-checkbox">
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 p-2 rounded-3 me-3">
+                            <i class="bi bi-box text-primary fs-5"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">{{ product.name }}</div>
+                            <div class="small text-muted font-monospace">
+                                Barcode: {{ product.barcode|default:"---" }} | SKU: {{ product.sku }}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    {% if product.category %}
+                        <span class="badge bg-{% cycle 'primary' 'success' 'info' 'warning' 'danger' as badge_color %} bg-opacity-10 text-{{ badge_color }} border border-{{ badge_color }}-subtle rounded-pill px-3">
+                            <i class="bi bi-tag me-1"></i> {{ product.category.name }}
+                        </span>
+                    {% else %}
+                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3">
+                            <i class="bi bi-tag me-1"></i> Sin Categoría
+                        </span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="d-flex justify-content-between mb-1 small">
+                        <span class="fw-medium text-{{ product.stock_status }}">{{ product.stock }} {{ product.get_unit_display }}</span>
+                        <span class="text-body-secondary text-xs">Mín: {{ product.min_stock }}</span>
+                    </div>
+                    <div class="progress progress-sm" style="height: 6px;">
+                        <div class="progress-bar bg-{{ product.stock_status }}" 
+                             role="progressbar" 
+                             style="width: {{ product.stock_percentage }}%"
+                             aria-valuenow="{{ product.stock_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="fw-bold">${{ product.price }}</div>
+                    <small class="text-body-secondary text-xs">Costo: ${{ product.cost_price }}</small>
+                </td>
+                <td>
+                    {% if product.expiry_date %}
+                        <div class="d-flex align-items-center {% if product.expiry_date <= today %}text-danger fw-bold{% endif %}">
+                            <i class="bi bi-calendar-event me-2"></i>
+                            {{ product.expiry_date|date:"d M Y" }}
+                        </div>
+                    {% else %}
+                        <span class="text-body-secondary small">Sin fecha</span>
+                    {% endif %}
+                </td>
+                <td class="text-end pe-4">
+                    <div class="btn-group shadow-sm rounded-3">
+                        <a href="{% url 'products:product_update' pk=product.pk %}" class="btn btn-outline-secondary btn-sm border" title="Editar">
+                            <i class="bi bi-pencil text-primary"></i>
+                        </a>
+                        <a href="{% url 'products:product_delete' pk=product.pk %}" class="btn btn-outline-secondary btn-sm border" title="Eliminar">
+                            <i class="bi bi-trash text-danger"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center py-5">
+                    <i class="bi bi-search fs-1 text-body-secondary mb-3 d-block"></i>
+                    <p class="text-body-secondary">No se encontraron productos que coincidan con tu búsqueda.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</form>
+
+<!-- Barra flotante de acciones (aparece al seleccionar items) -->
+<div id="floating-actions" class="fixed-bottom bg-white border-top shadow-lg p-3 d-none animate__animated animate__slideInUp">
+    <div class="container d-flex justify-content-between align-items-center">
+        <div>
+            <span id="selected-count" class="badge bg-primary rounded-pill me-2">0</span>
+            <span class="fw-bold">Productos seleccionados</span>
+        </div>
+        <div class="btn-group">
+            <button type="submit" form="labels-form" class="btn btn-primary rounded-pill px-4">
+                <i class="bi bi-printer me-2"></i>Imprimir Etiquetas
+            </button>
+            <button type="button" id="clear-selection" class="btn btn-link text-muted">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const selectAll = document.getElementById('select-all');
+    const checkboxes = document.querySelectorAll('.product-checkbox');
+    const floatingActions = document.getElementById('floating-actions');
+    const selectedCount = document.getElementById('selected-count');
+    const clearBtn = document.getElementById('clear-selection');
+
+    function updateFloatingBar() {
+        const checkedCount = document.querySelectorAll('.product-checkbox:checked').length;
+        if (checkedCount > 0) {
+            floatingActions.classList.remove('d-none');
+            selectedCount.innerText = checkedCount;
+        } else {
+            floatingActions.classList.add('d-none');
+        }
+    }
+
+    selectAll.addEventListener('change', () => {
+        checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        updateFloatingBar();
+    });
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateFloatingBar);
+    });
+
+    clearBtn.addEventListener('click', () => {
+        checkboxes.forEach(cb => cb.checked = false);
+        selectAll.checked = false;
+        updateFloatingBar();
+    });
+</script>
+
+{% endblock %}
