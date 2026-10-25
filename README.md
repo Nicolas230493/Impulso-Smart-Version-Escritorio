@@ -160,3 +160,4 @@ El resultado queda en **`dist/ImpulsoSmart/`** (`ImpulsoSmart.exe` en Windows, `
   - Creá un usuario por cajero: cada uno opera su propia caja.
   - Verificá que la carpeta `backups/` se esté generando.
   - Llevá periódicamente una copia a un pendrive con *Configuración → Exportar copia a carpeta / pendrive*.
+# Impulso-Smart-Version-Escritorio
